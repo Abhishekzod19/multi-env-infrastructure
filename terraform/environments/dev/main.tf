@@ -22,7 +22,7 @@ module "networking" {
 module "compute" {
   source = "../../modules/compute"
   
-  # Use the EXACT argument names from your module
+ 
   environment    = "dev"
   region         = var.region
   subnet_id      = module.networking.subnet_ids[0]
