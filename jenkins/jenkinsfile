@@ -57,7 +57,14 @@ pipeline {
                 }
             }
         }
+        stage('Terraform Refresh') {
         
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh 'terraform refresh'
+                }
+            }
+        }
         stage('Terraform Validate') {
             steps {
                 dir("terraform/environments/${params.ENVIRONMENT}") {
