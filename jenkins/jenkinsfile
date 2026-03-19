@@ -65,6 +65,22 @@ pipeline {
                 }
             }
         }
+        
+        stage('Terraform Import') {
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh '''
+                        terraform import module.networking.google_compute_subnetwork.subnets[0] projects/dev-env-project-490714/regions/europe-west4/subnetworks/dev-subnet-0 || true
+                        terraform import module.networking.google_compute_subnetwork.subnets[1] projects/dev-env-project-490714/regions/europe-west4/subnetworks/dev-subnet-1 || true
+                        terraform import module.networking.google_compute_router.router projects/dev-env-project-490714/regions/europe-west4/routers/dev-router || true
+                        terraform import module.networking.google_compute_router_nat.nat dev-env-project-490714/europe-west4/dev-router/dev-nat || true
+                        terraform import module.compute.google_compute_instance_template.template projects/dev-env-project-490714/global/instanceTemplates/dev-template-20260319192851558000000001 || true
+                        terraform import module.compute.google_compute_region_instance_group_manager.mig projects/dev-env-project-490714/regions/europe-west4/instanceGroupManagers/dev-mig || true
+                    '''
+                }
+            }
+        }
+
         stage('Terraform Validate') {
             steps {
                 dir("terraform/environments/${params.ENVIRONMENT}") {
