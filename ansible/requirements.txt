@@ -1,0 +1,3 @@
+ansible>=2.10
+google-auth>=2.0
+requests>=2.25

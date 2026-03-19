@@ -1,0 +1,15 @@
+---
+- name: Configure Staging Environment Servers
+  hosts: staging
+  become: yes
+  vars:
+    environment: staging
+    timezone: America/New_York
+    
+  roles:
+    - common
+    - webserver
+    - appserver
+    
+  vars_files:
+    - "vars/{{ environment }}/main.yml"

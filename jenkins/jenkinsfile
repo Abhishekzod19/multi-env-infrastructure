@@ -1,0 +1,127 @@
+pipeline {
+    agent any
+    
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'prod'],
+            description: 'Target environment'
+        )
+        choice(
+            name: 'ACTION',
+            choices: ['plan', 'apply', 'destroy'],
+            description: 'Terraform action'
+        )
+    }
+    
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account')
+        // Project IDs mapping
+        DEV_PROJECT = 'dev-env-project-490714'
+        STAGING_PROJECT = 'stg-env-project'
+        PROD_PROJECT = 'prod-env-project-490714'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Set Project') {
+            steps {
+                script {
+                    if (params.ENVIRONMENT == 'dev') {
+                        env.PROJECT_ID = DEV_PROJECT
+                        env.TF_VAR_project_id = DEV_PROJECT
+                    } else if (params.ENVIRONMENT == 'staging') {
+                        env.PROJECT_ID = STAGING_PROJECT
+                        env.TF_VAR_project_id = STAGING_PROJECT
+                    } else if (params.ENVIRONMENT == 'prod') {
+                        env.PROJECT_ID = PROD_PROJECT
+                        env.TF_VAR_project_id = PROD_PROJECT
+                    }
+                }
+            }
+        }
+        
+        stage('Terraform Init') {
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh '''
+                        terraform init \
+                            -backend-config=bucket=${PROJECT_ID}-tfstate \
+                            -backend-config=prefix=${ENVIRONMENT}
+                    '''
+                }
+            }
+        }
+        
+        stage('Terraform Validate') {
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh 'terraform validate'
+                }
+            }
+        }
+        
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'plan' || params.ACTION == 'apply' }
+            }
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+        
+        stage('Approval') {
+            when {
+                expression { params.ACTION == 'apply' && params.ENVIRONMENT == 'prod' }
+            }
+            steps {
+                input message: 'Approve production deployment?', ok: 'Deploy'
+            }
+        }
+        
+        stage('Terraform Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir("terraform/environments/${params.ENVIRONMENT}") {
+                    sh 'terraform apply tfplan'
+                }
+            }
+        }
+        
+        stage('Ansible Configuration') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                dir('ansible') {
+                    sh '''
+                        ansible-playbook -i inventory/gcp_inventory.py \
+                            playbooks/${ENVIRONMENT}.yml \
+                            --extra-vars "environment=${ENVIRONMENT}"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Deployment to ${params.ENVIRONMENT} successful!"
+        }
+        failure {
+            echo "Deployment to ${params.ENVIRONMENT} failed!"
+        }
+    }
+}

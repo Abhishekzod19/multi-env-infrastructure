@@ -1,0 +1,14 @@
+---
+- name: Configure Dev Environment Servers
+  hosts: dev
+  become: yes
+  vars:
+    environment: dev
+    timezone: America/New_York
+  
+  roles:
+    - common
+    - webserver
+  
+  vars_files:
+    - "vars/{{ environment }}/main.yml"

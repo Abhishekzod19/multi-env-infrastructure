@@ -1,0 +1,32 @@
+jenkins:
+  systemMessage: "Multi-Environment Infrastructure Automation"
+  
+  clouds:
+    - gce:
+        name: "gcp"
+        projectId: "your-project-id"
+        instanceCap: 10
+        configurations:
+          - namePrefix: "jenkins-agent"
+            region: "us-central1"
+            zone: "us-central1-a"
+            machineType: "n1-standard-2"
+            mode: "EXCLUSIVE"
+            retentionTime: 30
+            numExecutors: 2
+  
+  jobs:
+    - script: >
+        multibranchPipelineJob('infrastructure-pipeline') {
+          branchSources {
+            git {
+              id = 'infrastructure-repo'
+              remote('https://github.com/your-org/infrastructure.git')
+            }
+          }
+          factory {
+            workflowBranchProjectFactory {
+              scriptPath('jenkins/Jenkinsfile')
+            }
+          }
+        }

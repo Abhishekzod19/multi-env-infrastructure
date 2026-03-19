@@ -1,0 +1,27 @@
+# Local .terraform directories
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars.json
+
+# Credentials files
+*.json
+gcp-credentials.json
+*.key
+
+# Ansible
+ansible/inventory/inventory.json
+*.retry
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Environment files
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/variables.tfvars
