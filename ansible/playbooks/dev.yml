@@ -3,7 +3,7 @@
   hosts: dev
   become: yes
   vars:
-    environment: dev
+    env: dev
     timezone: America/New_York
   
   roles:
