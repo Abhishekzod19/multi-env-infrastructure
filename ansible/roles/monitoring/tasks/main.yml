@@ -1,0 +1,23 @@
+---
+- name: Download Ops Agent installer
+  get_url:
+    url: https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+    dest: /tmp/add-google-cloud-ops-agent-repo.sh
+    mode: '0755'
+
+- name: Install Ops Agent
+  shell: /tmp/add-google-cloud-ops-agent-repo.sh --also-install
+  args:
+    creates: /etc/google-cloud-ops-agent/config.yaml
+
+- name: Configure Ops Agent
+  template:
+    src: ops-agent-config.yaml.j2
+    dest: /etc/google-cloud-ops-agent/config.yaml
+  notify: restart ops-agent
+
+- name: Ensure Ops Agent is running
+  systemd:
+    name: google-cloud-ops-agent
+    state: started
+    enabled: yes

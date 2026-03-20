@@ -1,0 +1,22 @@
+# Google Cloud Ops Agent configuration
+logging:
+  receivers:
+    syslog:
+      type: files
+      include_paths:
+      - /var/log/syslog
+      - /var/log/messages
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [syslog]
+
+metrics:
+  receivers:
+    hostmetrics:
+      type: hostmetrics
+      collection_interval: 60s
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [hostmetrics]

@@ -8,6 +8,7 @@
   
   roles:
     - common
+    - monitoring
     - webserver
   
   vars_files:
