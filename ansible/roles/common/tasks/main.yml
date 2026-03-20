@@ -12,11 +12,13 @@
       - git
       - htop
       - python3-pip
+      - ca-certificates
     state: present
 
-- name: Set timezone
-  timezone:
-    name: "{{ timezone }}"
+
+# - name: Set timezone
+#   timezone:
+#     name: "America/New_York"
 
 - name: Create deploy user
   user:
@@ -24,7 +26,7 @@
     shell: /bin/bash
     groups: sudo
     append: yes
-    ssh_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    
 
 - name: Configure SSH
   lineinfile:
@@ -35,3 +37,21 @@
     - { regexp: '^PermitRootLogin', line: 'PermitRootLogin no' }
     - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
   notify: restart ssh
+
+- name: Ensure .ssh directory exists for deploy user
+  file:
+    path: /home/deploy/.ssh
+    state: directory
+    owner: deploy
+    group: deploy
+    mode: '0700'
+  when: deploy_user_ssh_key is defined
+
+- name: Add SSH key for deploy user (if provided)
+  copy:
+    content: "{{ deploy_user_ssh_key }}"
+    dest: /home/deploy/.ssh/authorized_keys
+    owner: deploy
+    group: deploy
+    mode: '0600'
+  when: deploy_user_ssh_key is defined

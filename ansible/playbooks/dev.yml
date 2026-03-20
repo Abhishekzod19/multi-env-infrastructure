@@ -4,6 +4,8 @@
   become: true
   vars:
     env_name: dev  
+    timezone: America/New_York
+  
   roles:
     - common
     - webserver
